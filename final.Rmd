@@ -8,6 +8,7 @@ output: pdf_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+library(ggplot2)
 library(MASS)
 library(biotools)
 library(klaR)
@@ -54,13 +55,54 @@ d <- d[,c(ncol(d), 1:(ncol(d)-1))]
 
 ```
 
-# Plots
+# Summaries of Data
 
 ```{r}
+summary(d)
+```
+# Plots
+
+```{r, fig.width=8, fig.height=10}
+# plot histograms of all variables
+dd <- d %>%
+  pivot_longer(cols = -ID,
+               names_to = "variable",
+               values_to = "value")
+g <- ggplot(dd,
+            aes(x = value)) +
+  geom_histogram(bins = 30) +
+  facet_wrap(~variable, scales = "free",
+             nrow = 5)
+
+g
 
 ```
 
-# 
+## Comments:
+
+- pH appears normally distributed
+- sulphates, alcohol, and quality appear right-skewed
+
+
+## Now let's standardize data
+
+```{r, fig.width=8, fig.height=10}
+dc <- d
+dc[-1] <- scale(d[-1])
+
+dd <- dc %>%
+  pivot_longer(cols = -ID,
+               names_to = "variable",
+               values_to = "value")
+
+g <- ggplot(dd,
+            aes(x = value)) +
+  geom_histogram(bins = 30) +
+  facet_wrap(~variable, scales = "free",
+             nrow = 5)
+g
+```
+
 
 
 
