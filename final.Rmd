@@ -1,0 +1,78 @@
+---
+title: "Final"
+author: "Felix Bridgeman & Liam Varela"
+date: "2024-05-02"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(MASS)
+library(biotools)
+library(klaR)
+library(car)
+library(lubridate)
+library(readxl)
+library(ggExtra)
+library(GGally)
+library(plotly)
+library(heplots)
+library(nnet)
+library(pROC)
+library(corrplot)
+library(aplpack)
+library(fpc)
+library(cluster)
+library(ape)
+library(vegan)
+library(vegan3d)
+library(mgcv)
+library(rgl)
+library(psych)
+library(EFAtools)
+library(knitr)
+library(kableExtra)
+library(dplyr)
+library(pubtheme)
+```
+
+# Import Data
+
+```{r}
+dred <- read.csv("data/winequality-red.csv", sep = ";")
+dwhite <- read.csv("data/winequality-white.csv" , sep = ";")
+dnames <- read.csv("data/winequality.names", sep = "\t")
+d <- rbind(dred, dwhite)
+
+head(d)
+
+# make ID column
+d$ID <- 1:nrow(d)
+# move ID column to front
+d <- d[,c(ncol(d), 1:(ncol(d)-1))]
+
+```
+
+# Plots
+
+```{r}
+
+```
+
+# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
