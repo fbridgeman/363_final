@@ -44,16 +44,21 @@ library(pubtheme)
 dred <- read.csv("data/winequality-red.csv", sep = ";") %>%
   mutate(type = 1)
 dwhite <- read.csv("data/winequality-white.csv" , sep = ";") %>%
-  mutate(type = 2)
+  mutate(type = 0)
 
-d <- rbind(dred, dwhite)
+# in case we want to analyze a subset because too many datapoints can hinder interpretability
+# we can also perfomr PCA on white and red wine separately
+dred_subset <- dred[sample(nrow(dred), 100), ]
+dwhite_subset <- dwhite[sample(nrow(dwhite), 100), ]
 
-head(d)
+wines <- rbind(dred, dwhite)
+
+head(wines)
 
 # make ID column
-d$ID <- 1:nrow(d)
+wines$ID <- 1:nrow(wines)
 # move ID column to front
-d <- d[,c(ncol(d), 1:(ncol(d)-1))]
+wines <- wines[,c(ncol(wines), 1:(ncol(wines)-1))]
 
 ```
 
@@ -90,14 +95,14 @@ We have 13 variables in our dataset.
 # Summaries of Data
 
 ```{r}
-summary(d)
+summary(wines)
 ```
 
 # Plots
 
 ```{r, fig.width=8, fig.height=10}
 # plot histograms of all variables
-dd <- d %>%
+dd <- wines %>%
   pivot_longer(cols = -ID,
                names_to = "variable",
                values_to = "value")
@@ -119,8 +124,8 @@ g
 ## Now let's standardize data
 
 ```{r, fig.width=8, fig.height=10}
-dc <- d
-dc[-1] <- scale(d[-1])
+dc <- wines
+dc[-1] <- scale(wines[-1])
 
 dd <- dc %>%
   pivot_longer(cols = -ID,
@@ -135,13 +140,80 @@ g <- ggplot(dd,
 g
 ```
 
+\newpage
+
+# PCA
+
+### Check some assumptions
+
+```{r, fig.height=10, fig.width=10, warning=FALSE}
+# pairs(wines)
+chart.Correlation(wines[, -13])
+
+wines_trans <- wines %>% 
+  mutate(log_total.sulfur.dioxide = log(total.sulfur.dioxide),
+         log_free.sulfur.dioxide = log(free.sulfur.dioxide)) %>% 
+  select(-free.sulfur.dioxide, -total.sulfur.dioxide)
+wines_trans <- wines_trans[,c(1,2,3,4,5,6,7,8,9,12,13,10,11)]
+
+chart.Correlation(wines_trans[,-13])
+cqplot(wines_trans)
+
+# ## gets rid of some of the mahalanobis outliers to make cq plot look nicer
+# wines_trans <- wines_trans[-which.max(mahalanobis(wines_trans, colMeans(wines_trans), cov(wines_trans))),]
+# cqplot(wines_trans)
+
+wines_trans[,1:11] <- scale(wines_trans[,1:11])
+
+corrplot.mixed(cor(wines[,-1]), lower.col = "black", upper = "ellipse", tl.col = "black", number.cex = .7, order = "hclust", tl.pos = "lt", tl.cex = .7)
+```
+
+### run PCA
+
+```{r, fig.height=20, fig.width=20}
+wine_pc1 <- princomp(wines_trans, cor = TRUE)
+
+summary(wine_pc1)
+
+#Get loadings
+print(wine_pc1$loadings, cutoff = 0, digits = 2)
+
+#Get eigenvalues
+round(wine_pc1$sdev^2, 2)
+
+#make a screeplot  
+screeplot(wine_pc1, type = "lines", col = "red", lwd = 2, pch = 19, cex = 1.2, 
+          main = "Scree Plot of Transformed WB Data")
+
+source("http://www.reuningscherer.net/multivariate/R/parallel.r.txt")
+
+#make the parallel analysis plot
+#parallelplot(wine_pc1)
+
+source("http://reuningscherer.net/multivariate/r/ciscoreplot.R.txt")
+
+#run the function
+ciscoreplot(wine_pc1, c(1, 2), wines_trans[,13])
+
+biplot(wine_pc1, choices = c(1,2), pc.biplot = T)
+biplot(wine_pc1, choices = c(1,3), pc.biplot = T)
+biplot(wine_pc1, choices = c(2,3), pc.biplot = T)
+```
+
+# Discriminant Analysis
+
+```{r}
+
+# for DA lets make another categorical variable so that our results will be more interesting
+breaks <- c(0,1,10,35,120,220)
+wines$sugar.factor <- cut(wines$residual.sugar, breaks = breaks, labels = c("bone-dry", "dry", "off-dry", "sweet", "very-sweet"), include.lowest = TRUE)
+
+for (i in 1:12) {  # Assuming first column is 'Group'
+  boxplot(wines[, i] ~ wines$type, main = names(wines)[i], xlab = "White (0) vs Red (1)", ylab = "Vals", col = rainbow(3))
+}
 
 
-
-
-
-
-
+```
 
 
 
